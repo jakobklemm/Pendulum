@@ -1,39 +1,51 @@
 use nannou::prelude::*;
 
-fn main() {
-    nannou::sketch(view).run()
+struct Point {
+    point: XY,
+
+    angle: f32,
+    acc: f32,
+    vel: f32,
+    gravity: f32,
+    len: f32
 }
 
-fn view(app: &App, frame: Frame) {
-    // Begin drawing
+fn main() {
+    nannou::app(value).simple_window(view).update(update).run();
+}
+
+fn value(_app: &App) -> Point {
+    let distance = 200.0;
+    Point {
+	point: Polar::new(distance, 0.0).to_xy(),
+
+	angle: -1.2 * PI,
+	acc: 0.0,
+	vel: 0.0,
+	gravity: 1.0,
+	len: distance
+    }
+}
+
+fn update(_app: &App, m: &mut Point, _update: Update) {
+    m.acc = (m.gravity / m.len) * m.angle.sin();
+    m.vel = m.vel + m.acc;
+    m.angle = m.angle + m.vel;
+    m.point.x = m.len * m.angle.sin();
+    m.point.y = m.len * m.angle.cos();
+
+}
+
+fn view(app: &App, m: &Point, frame: Frame) {
     let draw = app.draw();
 
-    // Clear the background to blue.
     draw.background().color(WHITE);
 
-    // Draw a purple triangle in the top left half of the window.
-    //let win = app.window_rect();
-
-    // Draw an ellipse to follow the mouse.
-    let base_x = 0.0;
-    let base_y = 0.0;
+    let line_s = pt2(0.0, 0.0);
+    let line_e = pt2(m.point.x, m.point.y);
 
     draw.ellipse()
-	.x_y(base_x, base_y)
-        .radius(10.0)
-        .color(BLACK);
-
-    let t = app.time / 3.0;
-    let len = 100.0;
-    let w = 6.3;
-    let _polar = Polar::new(len, 0.0).to_xy();
-    let target_x = len * (w * t).cos().sin();
-    let target_y = len * (1.0 - ((w * t).cos()).cos()) - len;
-    let line_s = pt2(base_x, base_y);
-    let line_e = pt2(target_x, target_y);
-
-    draw.ellipse()
-	.x_y(target_x, target_y)
+	.x_y(m.point.x, m.point.y)
         .radius(10.0)
         .color(BLACK);
 
