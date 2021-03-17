@@ -22,7 +22,7 @@ fn value(_app: &App) -> Point {
 	angle: -1.2 * PI,
 	acc: 0.0,
 	vel: 0.0,
-	gravity: 1.0,
+	gravity: 0.5,
 	len: distance
     }
 }
