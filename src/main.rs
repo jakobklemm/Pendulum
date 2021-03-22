@@ -7,7 +7,8 @@ struct Point {
     acc: f32,
     vel: f32,
     gravity: f32,
-    len: f32
+    len: f32,
+    damp: f32,
 }
 
 fn main() {
@@ -23,29 +24,30 @@ fn value(_app: &App) -> Point {
 	acc: 0.0,
 	vel: 0.0,
 	gravity: 0.5,
-	len: distance
+	len: distance,
+	damp: 0.05,
     }
 }
 
-fn update(_app: &App, m: &mut Point, _update: Update) {
-    m.acc = (m.gravity / m.len) * m.angle.sin();
-    m.vel = m.vel + m.acc;
-    m.angle = m.angle + m.vel;
-    m.point.x = m.len * m.angle.sin();
-    m.point.y = m.len * m.angle.cos();
-
+fn update(_app: &App, p: &mut Point, _update: Update) {
+    p.acc = (p.gravity / p.len) * p.angle.sin();
+    let damp = 1.0 - (p.vel * -2.0 * p.damp).abs();
+    p.vel = (p.vel + p.acc) * damp;
+    p.angle = p.angle + p.vel;
+    p.point.x = p.len * p.angle.sin();
+    p.point.y = p.len * p.angle.cos();
 }
 
-fn view(app: &App, m: &Point, frame: Frame) {
+fn view(app: &App, p: &Point, frame: Frame) {
     let draw = app.draw();
 
     draw.background().color(WHITE);
 
     let line_s = pt2(0.0, 0.0);
-    let line_e = pt2(m.point.x, m.point.y);
+    let line_e = pt2(p.point.x, p.point.y);
 
     draw.ellipse()
-	.x_y(m.point.x, m.point.y)
+	.x_y(p.point.x, p.point.y)
         .radius(10.0)
         .color(BLACK);
 
@@ -55,7 +57,6 @@ fn view(app: &App, m: &Point, frame: Frame) {
 	.weight(1.0)
 	.color(BLACK);
 
-    // Write the result of our drawing to the window's frame.
     draw.to_frame(app, &frame).unwrap();
 }
 
