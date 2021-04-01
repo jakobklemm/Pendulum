@@ -1,18 +1,20 @@
 use nannou::prelude::*;
 
 struct Point {
-    point_1: Polar,
-    point_2: Polar,
+    p1: Polar,
+    p2: Polar,
 
-    mass_1: f32,
-    acc_1: f32,
-    vel_1: f32,
+    m1: f32,
+    a1: f32,
+    v1: f32,
 
-    mass_2: f32,
-    acc_2: f32,
-    vel_2: f32,
+    m2: f32,
+    a2: f32,
+    v2: f32,
 
     gravity: f32,
+
+    history: Vec<Polar>
 }
 
 fn main() {
@@ -21,53 +23,55 @@ fn main() {
 
 fn value(_app: &App) -> Point {
     Point {
-	point_1: Polar::new(200.0, PI / 7.0),
-	point_2: Polar::new(200.0, PI / 3.0),
+	p1: Polar::new(200.0, PI / 2.0),
+	p2: Polar::new(200.0, PI / 2.0),
 
-	mass_1: 30.0,
-	acc_1: 0.0,
-	vel_1: 0.0,
+	m1: 30.0,
+	a1: 0.0,
+	v1: 0.0,
 
-	mass_2: 30.0,
-	acc_2: 0.0,
-	vel_2: 0.0,
+	m2: 30.0,
+	a2: 0.0,
+	v2: 0.0,
 
 	gravity: 1.0,
+
+	history: Vec::new(),
     }
 }
 
 fn update(_app: &App, p: &mut Point, _update: Update) {
-    let upper_1 = -p.gravity * (2.0 * p.mass_1 + p.mass_2) * p.point_1.angle.sin()
-	- p.mass_2 * p.gravity * (p.point_1.angle - 2.0 * p.point_2.angle).sin()
-	- 2.0 * (p.point_1.angle - p.point_2.angle).sin()
-	* p.mass_2
-	* (p.vel_2 * p.vel_2 * p.point_2.length
-	   + p.vel_1 * p.vel_1 * p.point_1.length
-	   * (p.point_1.angle - p.point_2.angle).cos());
-
-    let lower_1 = p.point_1.length
-	* (2.0 * p.mass_1 + p.mass_2 * 
-	   (- p.mass_2 * (2.0 * p.point_1.angle - 2.0 * p.point_2.angle).cos()));
-
-    let upper_2 = 2.0
-	* (p.point_1.angle - p.point_2.angle).sin()
-	* (p.vel_1 * p.vel_1 * p.point_1.length * (p.mass_1 + p.mass_2)
-	   + p.gravity * (p.mass_1 + p.mass_2) * p.point_1.angle.cos()
-	   + p.vel_2 * p.vel_2 * p.point_2.length * p.mass_2
-	   * (p.point_1.angle - p.point_2.angle).cos());
-
-    let lower_2 = p.point_2.length
-	* (2.0 * p.mass_1 + (p.mass_2
-			     * (2.0 * p.point_1.angle - 2.0 * p.point_2.angle).cos()));
-
-    p.acc_1 = upper_1 / lower_1;
-    p.acc_2 = upper_2 / lower_2;
+    let u1 = -p.gravity * (2.0 * p.m1 + p.m2) * p.p1.angle.sin()
+        - p.m2 * p.gravity * (p.p1.angle - 2.0 * p.p2.angle).sin()
+        - 2.0
+        * (p.p1.angle - p.p2.angle).sin()
+        * p.m2
+        * (p.v2 * p.v2 * p.p2.length
+           + p.v1 * p.v1 * p.p1.length * (p.p1.angle - p.p2.angle).cos());
+    let l1 = p.p1.length * (2.0 * p.m1 + p.m2 - p.m2 * (2.0 * p.p1.angle - 2.0 * p.p2.angle).cos());
     
-    p.vel_1 += p.acc_1;
-    p.vel_2 += p.acc_2;
+    let u2 = 2.0
+        * (p.p1.angle - p.p2.angle).sin()
+        * (p.v1 * p.v1 * p.p1.length * (p.m1 + p.m2)
+           + p.gravity * (p.m1 + p.m2) * p.p1.angle.cos()
+                + p.v2 * p.v2 * p.p2.length * p.m2 * (p.p1.angle - p.p2.angle).cos());
+    let l2 = p.p2.length * (2.0 * p.m1 + p.m2 - p.m2 * (2.0 * p.p1.angle - 2.0 * p.p2.angle).cos());
 
-    p.point_1.angle += p.vel_1;
-    p.point_2.angle += p.vel_2;
+
+    p.a1 = u1 / l1;
+    p.a2 = u2 / l2;
+    
+    p.v1 += p.a1;
+    p.v2 += p.a2;
+    p.p1.angle += p.v1;
+    p.p2.angle += p.v2;
+
+    p.history.push(p.p2);
+    if p.history.len() > 100 {
+	p.history.reverse();
+	p.history.truncate(100);
+	p.history.reverse();
+    }
 }
 
 fn view(app: &App, p: &Point, frame: Frame) {
@@ -75,34 +79,61 @@ fn view(app: &App, p: &Point, frame: Frame) {
 
     draw.background().color(WHITE);
 
-    let win = app.window_rect().pad_top(300.0);
+    let win = app.window_rect().pad_top(100.0);
 
-    let offset_1 = p.point_1.to_xy().to_nannou();
-    let b1 = Rect::from_w_h(p.mass_1, p.mass_1)
-	.mid_top_of(win)
-	.shift(offset_1);
+    let offset1 = p.p1.to_xy().to_nannou();
+    let b1 = Rect::from_w_h(p.m1, p.m1)
+        .mid_top_of(win)
+        .shift(offset1);
 
-    let offset_2 = p.point_2.to_xy().to_nannou();
-    let b2 = Rect::from_w_h(p.mass_2, p.mass_2)
-	.middle_of(b1)
-	.shift(offset_2);
-
-    draw.line()
-	.start(win.mid_top())
-	.end(b1.xy())
-	.stroke_weight(3.0)
-	.color(BLACK);
+    let offset2 = p.p2.to_xy().to_nannou();
+    let b2 = Rect::from_w_h(p.m2, p.m2)
+        .middle_of(b1)
+        .shift(offset2);
 
     draw.line()
-	.start(b1.xy())
-	.end(b2.xy())
-	.stroke_weight(3.0)
-	.color(BLACK);
+        .start(win.mid_top())
+        .end(b1.xy())
+        .stroke_weight(3.0)
+        .color(BLACK);
+
+    draw.line()
+        .start(b1.xy())
+        .end(b2.xy())
+        .stroke_weight(3.0)
+        .color(BLACK);
 
     draw.ellipse().xy(b1.xy()).wh(b1.wh()).color(BLACK);
     draw.ellipse().xy(b2.xy()).wh(b2.wh()).color(BLACK);
 
-	
+    println!("{}", p.p2 == p.history.last());
+    
+    for (pos, _) in p.history.iter().enumerate() {
+	if pos != 0 {
+	    let current = p.history[pos].to_xy();
+	    let last = p.history[pos - 1].to_xy();
+
+	    let s = pt2(current.x, current.y);
+	    let e = pt2(last.x, last.y);
+	    
+	    /*
+	    let b1 = Rect::from_w_h(p.m1, p.m1)
+		.mid_top_of(win)
+		.shift(current);
+	    let b2 = Rect::from_w_h(p.m1, p.m1)
+		.middle_of(b1)
+		.shift(last);
+	    */
+
+	    draw.line()
+		.start(s)
+		.end(e)
+		.stroke_weight(1.0)
+		.color(RED);
+	    //println!("{:?}", p.history);
+	}
+    }
+
     /*
     let p1 = p.point_1.to_xy();
     let p2 = p.point_2.to_xy();
@@ -140,7 +171,7 @@ fn view(app: &App, p: &Point, frame: Frame) {
     draw.to_frame(app, &frame).unwrap();
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct XY {
     x: f32,
     y: f32,
@@ -165,7 +196,7 @@ impl XY {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Polar {
     pub length: f32,
     pub angle: f32,
@@ -184,8 +215,8 @@ impl Polar {
     }
 
     pub fn to_xy(&self) -> XY {
-        let x = self.angle.cos() * self.length;
-        let y = self.angle.sin() * self.length;
+        let x = self.angle.sin() * self.length;
+        let y = self.angle.cos() * self.length;
         XY { x, y }
     }
 }
