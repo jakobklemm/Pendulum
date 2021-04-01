@@ -14,7 +14,7 @@ struct Point {
 
     gravity: f32,
 
-    history: Vec<Polar>
+    history: Vec<(Polar, Polar)>
 }
 
 fn main() {
@@ -66,10 +66,12 @@ fn update(_app: &App, p: &mut Point, _update: Update) {
     p.p1.angle += p.v1;
     p.p2.angle += p.v2;
 
-    p.history.push(p.p2);
-    if p.history.len() > 100 {
+    let limit = 150;
+    
+    p.history.push((p.p1, p.p2));
+    if p.history.len() > limit {
 	p.history.reverse();
-	p.history.truncate(100);
+	p.history.truncate(limit);
 	p.history.reverse();
     }
 }
@@ -106,67 +108,57 @@ fn view(app: &App, p: &Point, frame: Frame) {
     draw.ellipse().xy(b1.xy()).wh(b1.wh()).color(BLACK);
     draw.ellipse().xy(b2.xy()).wh(b2.wh()).color(BLACK);
 
-    println!("{}", p.p2 == p.history.last());
-    
     for (pos, _) in p.history.iter().enumerate() {
 	if pos != 0 {
-	    let current = p.history[pos].to_xy();
-	    let last = p.history[pos - 1].to_xy();
+	    let base_x = 0.0;
+	    let base_y = 200.0;
 
-	    let s = pt2(current.x, current.y);
-	    let e = pt2(last.x, last.y);
-	    
-	    /*
-	    let b1 = Rect::from_w_h(p.m1, p.m1)
-		.mid_top_of(win)
-		.shift(current);
-	    let b2 = Rect::from_w_h(p.m1, p.m1)
-		.middle_of(b1)
-		.shift(last);
-	    */
+	    let (mut curr1, mut curr2) = p.history[pos];
+	    let (mut last1, mut last2) = p.history[pos - 1];
+
+	    curr1.angle += PI;
+	    curr2.angle += PI;
+	    last1.angle += PI;
+	    last2.angle += PI;
+
+	    let curr_x1 = base_x + curr1.angle.sin() * curr1.length;
+	    let curr_y1 = base_y + curr1.angle.cos() * curr1.length;
+
+	    let curr_x2 = curr_x1 + (curr2.angle.sin() * curr2.length);
+	    let curr_y2 = curr_y1 + (curr2.angle.cos() * curr2.length); 
+
+	    let last_x1 = base_x + last1.angle.sin() * last1.length;
+	    let last_y1 = base_y + last1.angle.cos() * last1.length;
+
+	    let last_y2 = last_y1 + (last2.angle.cos() * last2.length); 
+	    let last_x2 = last_x1 + (last2.angle.sin() * last2.length);
+
+	    let s1 = pt2(curr_x1, curr_y1);
+	    let e1  = pt2(last_x1, last_y1);
+
+	    let length = p.history.len() as f32;
+	    let o = pos as f32 / (length * 2.0);
 
 	    draw.line()
-		.start(s)
-		.end(e)
-		.stroke_weight(1.0)
+		.start(s1)
+		.end(e1)
+		.stroke_weight(o)
+		.color(BLUE);
+
+	    let s2 = pt2(curr_x2, curr_y2);
+	    let e2  = pt2(last_x2, last_y2);
+
+	    let length = p.history.len() as f32;
+	    let o = pos as f32 / length;
+
+	    draw.line()
+		.start(s2)
+		.end(e2)
+		.stroke_weight(o)
 		.color(RED);
-	    //println!("{:?}", p.history);
+
 	}
     }
-
-    /*
-    let p1 = p.point_1.to_xy();
-    let p2 = p.point_2.to_xy();
-
-    let line_s_1 = pt2(0.0, 0.0);
-    let line_e_1 = pt2(p1.x, p1.y);
-
-    let line_s_2 = pt2(p1.x, p1.y);
-    let line_e_2 = pt2(p1.x + p2.x, p1.y + p2.y);
-
-    draw.ellipse()
-	.x_y(p1.x, p1.y)
-        .radius(10.0)
-        .color(BLACK);
-
-    draw.line()
-	.start(line_s_1)
-	.end(line_e_1)
-	.weight(1.0)
-	.color(BLACK);
-
-    draw.ellipse()
-	.x_y(p1.x + p2.x, p2.y + p2.y)
-        .radius(10.0)
-        .color(BLACK);
-
-    draw.line()
-	.start(line_s_2)
-	.end(line_e_2)
-	.weight(1.0)
-	.color(BLACK);
-
-    */
 
     draw.to_frame(app, &frame).unwrap();
 }
