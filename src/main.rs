@@ -23,8 +23,8 @@ fn main() {
 
 fn value(_app: &App) -> Point {
     Point {
-	p1: Polar::new(200.0, PI / 2.0),
-	p2: Polar::new(200.0, PI / 2.0),
+	p1: Polar::new(250.0, 1.0),
+	p2: Polar::new(250.0, PI),
 
 	m1: 30.0,
 	a1: 0.0,
@@ -66,7 +66,7 @@ fn update(_app: &App, p: &mut Point, _update: Update) {
     p.p1.angle += p.v1;
     p.p2.angle += p.v2;
 
-    let limit = 150;
+    let limit = 125;
     
     p.history.push((p.p1, p.p2));
     if p.history.len() > limit {
@@ -81,38 +81,49 @@ fn view(app: &App, p: &Point, frame: Frame) {
 
     draw.background().color(WHITE);
 
-    let win = app.window_rect().pad_top(100.0);
+    let base_x = 0.0;
+    let base_y = 200.0;
 
-    let offset1 = p.p1.to_xy().to_nannou();
-    let b1 = Rect::from_w_h(p.m1, p.m1)
-        .mid_top_of(win)
-        .shift(offset1);
+    let mut p1 = p.p1;
+    p1.angle += PI;
+    let x1 = base_x + (p1.angle.sin() * p1.length);    
+    let y1 = base_y + (p1.angle.cos() * p1.length);
 
-    let offset2 = p.p2.to_xy().to_nannou();
-    let b2 = Rect::from_w_h(p.m2, p.m2)
-        .middle_of(b1)
-        .shift(offset2);
+    draw.ellipse()
+	.x_y(x1, y1)
+	.w(p.m1)
+	.h(p.m1)
+	.color(BLACK);
+
+    let s = pt2(base_x, base_y);
+    let e = pt2(x1, y1);
 
     draw.line()
-        .start(win.mid_top())
-        .end(b1.xy())
-        .stroke_weight(3.0)
-        .color(BLACK);
+	.start(s)
+	.end(e)
+	.color(BLACK);
+    
+    let mut p2 = p.p2;
+    p2.angle += PI;
+    let x2 = x1 + (p2.angle.sin() * p2.length);
+    let y2 = y1 + (p2.angle.cos() * p2.length);
+
+    draw.ellipse()
+	.x_y(x2, y2)
+	.w(p.m2)
+	.h(p.m2)
+	.color(BLACK);
+
+    let e2 = pt2(x2, y2);
 
     draw.line()
-        .start(b1.xy())
-        .end(b2.xy())
-        .stroke_weight(3.0)
-        .color(BLACK);
-
-    draw.ellipse().xy(b1.xy()).wh(b1.wh()).color(BLACK);
-    draw.ellipse().xy(b2.xy()).wh(b2.wh()).color(BLACK);
+	.start(e)
+	.end(e2)
+	.color(BLACK);
 
     for (pos, _) in p.history.iter().enumerate() {
 	if pos != 0 {
-	    let base_x = 0.0;
-	    let base_y = 200.0;
-
+	    
 	    let (mut curr1, mut curr2) = p.history[pos];
 	    let (mut last1, mut last2) = p.history[pos - 1];
 
@@ -137,7 +148,7 @@ fn view(app: &App, p: &Point, frame: Frame) {
 	    let e1  = pt2(last_x1, last_y1);
 
 	    let length = p.history.len() as f32;
-	    let o = pos as f32 / (length * 2.0);
+	    let o = pos as f32 / (length * 3.0);
 
 	    draw.line()
 		.start(s1)
