@@ -1,8 +1,10 @@
 use nannou::prelude::*;
 use nannou::ui::prelude::*;
 
+// Defines model & data structure
 struct Point {
     ui: Ui,
+    // Each UI Element needs their own ID in the state object.
     s1: widget::Id,
     s2: widget::Id,
     s3: widget::Id,
@@ -31,6 +33,7 @@ fn main() {
     nannou::app(value).update(update).simple_window(view).run();
 }
 
+// Initiates the state using default vaules & random ID values.
 fn value(app: &App) -> Point {
     let mut ui = app.new_ui().build().unwrap();
 
@@ -44,12 +47,12 @@ fn value(app: &App) -> Point {
 
     Point {
         p1: Polar::new(250.0, 1.0),
-        p2: Polar::new(250.0, 3.0),
 
         m1: 30.0,
         a1: 0.0,
         v1: 0.0,
 
+        p2: Polar::new(250.0, 3.0),
         m2: 30.0,
         a2: 0.0,
         v2: 0.0,
@@ -69,6 +72,7 @@ fn value(app: &App) -> Point {
     }
 }
 
+// Runs the main calculations for the new positions and controls the sliders.
 fn update(_app: &App, p: &mut Point, _update: Update) {
     let u1 = -p.gravity * (2.0 * p.m1 + p.m2) * p.p1.angle.sin()
         - p.m2 * p.gravity * (p.p1.angle - 2.0 * p.p2.angle).sin()
@@ -94,6 +98,8 @@ fn update(_app: &App, p: &mut Point, _update: Update) {
     p.p1.angle += p.v1;
     p.p2.angle += p.v2;
 
+    //Instead of using some complex redrawing logic a simple array of last positions is stored. 
+    
     let limit = 125;
 
     p.history.push((p.p1, p.p2));
@@ -103,7 +109,10 @@ fn update(_app: &App, p: &mut Point, _update: Update) {
         p.history.reverse();
     }
 
+    // Using the "set" method sliders & texts are added to the current UI object, from where they are drawn.
     let ui = &mut p.ui.set_widgets();
+
+    // Initialize and connect all sliders & text fields.
 
     widget::Text::new("Pendulum Simulation")
         .top_right_with_margins(20.0, 20.0)
@@ -184,6 +193,8 @@ fn view(app: &App, p: &Point, frame: Frame) {
 
     draw.background().color(WHITE);
 
+    // Since all positions are relative the absolute coordinates of each point have to be calculated.
+    
     let base_x: f64 = 0.0;
     let base_y: f64 = 0.0;
 
@@ -210,6 +221,9 @@ fn view(app: &App, p: &Point, frame: Frame) {
 
     draw.line().start(e).end(e2).color(BLACK);
 
+
+    // For each point in the history the positions are calculated and connected using lines.
+    // This is not the most efficient method since for each frame all calculated are redone.
     for (pos, _) in p.history.iter().enumerate() {
         if pos != 0 {
             let (mut curr1, mut curr2) = p.history[pos];
@@ -252,6 +266,7 @@ fn view(app: &App, p: &Point, frame: Frame) {
 
     draw.to_frame(app, &frame).unwrap();
 
+    // Draw the UI to the frame.
     p.ui.draw_to_frame(app, &frame).unwrap();
 }
 
