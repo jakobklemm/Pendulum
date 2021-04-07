@@ -14,15 +14,15 @@ struct Point {
     p1: Polar,
     p2: Polar,
 
-    m1: f32,
-    a1: f32,
-    v1: f32,
+    m1: f64,
+    a1: f64,
+    v1: f64,
 
-    m2: f32,
-    a2: f32,
-    v2: f32,
+    m2: f64,
+    a2: f64,
+    v2: f64,
 
-    gravity: f32,
+    gravity: f64,
 
     history: Vec<(Polar, Polar)>,
 }
@@ -44,7 +44,7 @@ fn value(app: &App) -> Point {
 
     Point {
         p1: Polar::new(250.0, 1.0),
-        p2: Polar::new(250.0, PI),
+        p2: Polar::new(250.0, 3.0),
 
         m1: 30.0,
         a1: 0.0,
@@ -184,29 +184,29 @@ fn view(app: &App, p: &Point, frame: Frame) {
 
     draw.background().color(WHITE);
 
-    let base_x = 0.0;
-    let base_y = 0.0;
+    let base_x: f64 = 0.0;
+    let base_y: f64 = 0.0;
 
     let mut p1 = p.p1;
-    p1.angle += PI;
-    let x1 = base_x + (p1.angle.sin() * p1.length);
-    let y1 = base_y + (p1.angle.cos() * p1.length);
+    p1.angle += PI as f64;
+    let x1: f64 = base_x + (p1.angle.sin() * p1.length);
+    let y1: f64 = base_y + (p1.angle.cos() * p1.length);
 
-    draw.ellipse().x_y(x1, y1).w(p.m1).h(p.m1).color(BLACK);
+    draw.ellipse().x_y(x1 as f32, y1 as f32).w(p.m1 as f32).h(p.m1 as f32).color(BLACK);
 
-    let s = pt2(base_x, base_y);
-    let e = pt2(x1, y1);
+    let s = pt2(base_x as f32, base_y as f32);
+    let e = pt2(x1 as f32, y1 as f32);
 
     draw.line().start(s).end(e).color(BLACK);
 
     let mut p2 = p.p2;
-    p2.angle += PI;
+    p2.angle += PI as f64;
     let x2 = x1 + (p2.angle.sin() * p2.length);
     let y2 = y1 + (p2.angle.cos() * p2.length);
 
-    draw.ellipse().x_y(x2, y2).w(p.m2).h(p.m2).color(BLACK);
+    draw.ellipse().x_y(x2 as f32, y2 as f32).w(p.m2 as f32).h(p.m2 as f32).color(BLACK);
 
-    let e2 = pt2(x2, y2);
+    let e2 = pt2(x2 as f32, y2 as f32);
 
     draw.line().start(e).end(e2).color(BLACK);
 
@@ -215,10 +215,10 @@ fn view(app: &App, p: &Point, frame: Frame) {
             let (mut curr1, mut curr2) = p.history[pos];
             let (mut last1, mut last2) = p.history[pos - 1];
 
-            curr1.angle += PI;
-            curr2.angle += PI;
-            last1.angle += PI;
-            last2.angle += PI;
+            curr1.angle += PI as f64;
+            curr2.angle += PI as f64;
+            last1.angle += PI as f64;
+            last2.angle += PI as f64;
 
             let curr_x1 = base_x + curr1.angle.sin() * curr1.length;
             let curr_y1 = base_y + curr1.angle.cos() * curr1.length;
@@ -232,16 +232,16 @@ fn view(app: &App, p: &Point, frame: Frame) {
             let last_y2 = last_y1 + (last2.angle.cos() * last2.length);
             let last_x2 = last_x1 + (last2.angle.sin() * last2.length);
 
-            let s1 = pt2(curr_x1, curr_y1);
-            let e1 = pt2(last_x1, last_y1);
+            let s1 = pt2(curr_x1 as f32, curr_y1 as f32);
+            let e1 = pt2(last_x1 as f32, last_y1 as f32);
 
             let length = p.history.len() as f32;
             let o = pos as f32 / (length * 3.0);
 
             draw.line().start(s1).end(e1).stroke_weight(o).color(BLUE);
 
-            let s2 = pt2(curr_x2, curr_y2);
-            let e2 = pt2(last_x2, last_y2);
+            let s2 = pt2(curr_x2 as f32, curr_y2 as f32);
+            let e2 = pt2(last_x2 as f32, last_y2 as f32);
 
             let length = p.history.len() as f32;
             let o = pos as f32 / length;
@@ -257,12 +257,12 @@ fn view(app: &App, p: &Point, frame: Frame) {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct XY {
-    x: f32,
-    y: f32,
+    x: f64,
+    y: f64,
 }
 
 impl XY {
-    pub fn new(x: f32, y: f32) -> Self {
+    pub fn new(x: f64, y: f64) -> Self {
         Self { x, y }
     }
     #[allow(dead_code)]
@@ -282,12 +282,12 @@ impl XY {
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Polar {
-    pub length: f32,
-    pub angle: f32,
+    pub length: f64,
+    pub angle: f64,
 }
 
 impl Polar {
-    pub fn new(length: f32, angle: f32) -> Self {
+    pub fn new(length: f64, angle: f64) -> Self {
         Self { length, angle }
     }
 
