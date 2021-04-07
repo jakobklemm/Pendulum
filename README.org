@@ -4,5 +4,7 @@
 A simple, interactive simulation of a chaotic double pendulum. It uses
 Rust and Nannou to draw the objects as well as the sliders.
 
-Playing around with the gravity slider has the potential to bring the
-pendulum into a death spin and crashing the application.
+[[file:pendulum.png]]
+
+Important: Playing around with the gravity slider has the potential to
+bring the pendulum into a death spin and crashing the application.
